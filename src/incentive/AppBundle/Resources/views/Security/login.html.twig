@@ -1,0 +1,54 @@
+{% extends '@incentiveApp/base.html.twig' %}
+
+{% trans_default_domain 'FOSUserBundle' %}
+
+{% block body %}
+    {% if error %}
+        <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+    {% endif %}
+    <div class="col-md-8 col-md-offset-2">
+        <div class="panel panel-default">
+            <div class="panel-heading">Нэвтрэх хэсэг</div>
+            <div class="panel-body">
+                <form class="form-horizontal" role="form" method="POST" action="{{ path("fos_user_security_check") }}">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token }}" />
+                    <div class="form-group">
+                        <label for="email" class="col-md-4 control-label">Нэвтрэх нэр</label>
+
+                        <div class="col-md-6">
+                            <input class="form-control" type="text" id="username" name="_username" value="{{ last_username }}" required="required" autofocus />
+
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password" class="col-md-4 control-label">Нууц үг</label>
+
+                        <div class="col-md-6">
+                            <input class="form-control" type="password" id="password" name="_password" required="required" />
+
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="col-md-6 col-md-offset-4">
+                            <div class="checkbox">
+                                <label>
+                                    <input name="remember" type="checkbox"> Намайг сана
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="col-md-8 col-md-offset-4">
+                            <button type="submit" class="btn btn-primary">
+                                Нэвтрэх
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

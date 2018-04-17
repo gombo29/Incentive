@@ -1,0 +1,16 @@
+{% extends '@incentiveApp/base.html.twig' %}
+{% block body %}
+    <div class="col-xs-12 col-md-12">
+        <h2>{{ title }}</h2>
+    </div>
+
+    <div class="col-xs-12 col-md-12">
+        {{ form_start(form) }}
+        {{ form_widget(form) }}
+        <div class="col-sm-4"></div>
+        <div class="col-sm-6">
+            <input class="btn btn-primary btn-rounded" type="submit" value="Хадгалах"/>
+        </div>
+        {{ form_end(form) }}
+    </div>
+{% endblock %}

@@ -1,0 +1,215 @@
+{% import _self as template %}
+{% extends '@incentiveApp/base.html.twig' %}
+
+{% macro branches(entities,level) %}
+    {% import _self as template %}
+    {% for entity in entities %}
+        <tr class="childrens" id="data{{ entity.id }}" data-id="{{ entity.id }}" data-parent="{{ entity.parent.id }}"
+            style="display: none">
+            <td>{% if entity.children|length > 0 %}<a data-status="close" href="#"
+                                                      onclick="openCloseChild({{ entity.id }},$(this))"><i
+                            id="plus{{ entity.id }}" class="glyphicon glyphicon-plus" style="font-size: 16px;"></i>
+                    </a>{% endif %}</td>
+            <td>{% for i in 0..level+1 %}-----{% endfor %}{{ entity.name }}</td>
+            <td>{% if entity.branchType != null %}{{ entity.branchType.name }}{% endif %}</td>
+            <td>{{ entity.createdDate|date('Y-m-d H:i:s') }}</td>
+            <td>{% if entity.updatedDate %}{{ entity.updatedDate|date('Y-m-d H:i:s') }}{% else %}-{% endif %}</td>
+            <td>
+                <a href="{{ path('branch_update', {'id': entity.id}) }}" style="font-size: 16px;">
+                    <span class="glyphicon glyphicon-pencil"></span>
+                </a>
+                <a href="{{ path('branch_delete', {'id': entity.id}) }}"
+                   onclick="if(!confirm('Итгэлтэй байна уу?'))return false;" style="font-size: 16px;">
+                    <span class="glyphicon glyphicon-trash"></span>
+                </a>
+            </td>
+        </tr>
+
+        {% if entity.children is defined %}
+            {{ template.branches(entity.children, level+1) }}
+        {% endif %}
+
+    {% endfor %}
+{% endmacro %}
+
+{% block body %}
+    <div class="row">
+        {% include '@incentiveApp/inc/flashmsg.html.twig' %}
+        <div class="col-xs-12 col-md-6">
+            <h2>{{ title }}</h2>
+        </div>
+        <div class="col-xs-12 col-md-6 text-right">
+            <a href="javascript:void(0)" id="searchlink"
+               class="btn btn-primary btn-rounded">Хайлт &DownArrowUpArrow;</a>
+            <a href="{{ path('branch_new') }}" class="btn btn-primary btn-rounded">Шинээр нэмэх</a>
+            <a href="{{ path('branch_hrm_new') }}" class="btn btn-primary btn-rounded">HRM-с татах</a>
+        </div>
+
+        <div class="col-xs-12 col-md-12 text-right">
+            <fieldset
+                    style="margin-top:20px;border:1px solid #ddd;{%if search%}display:block{%else%}display:none;{% endif %}"
+                    id="searchpad">
+                {% include '@incentiveApp/inc/search.html.twig' with {'route' : pageRoute} %}
+            </fieldset>
+        </div>
+
+        <div class="col-xs-12 col-md-12">
+
+            <a href="#" onclick="openAll()"> + Бүгдийг нээх</a>
+            <a href="#" onclick="closeAll()"> - Бүгдийг хаах</a>
+            <table class="table table-bordered">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Нэр</th>
+                    <th>Төрөл</th>
+                    <th>Үүсгэсэн огноо</th>
+                    <th>Өөрчилсөн огноо</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for entity in data %}
+                    <tr id="data{{ entity.id }}" data-id="{{ entity.id }}" class="parent">
+                        <td><a href="#" data-status="close" onclick="openCloseChild({{ entity.id }}, $(this))"><i
+                                        id="plus{{ entity.id }}" class="glyphicon glyphicon-plus"
+                                        style="font-size: 16px;"></i></a></td>
+                        <td>{{ entity.name }}</td>
+                        <td>{% if entity.branchType != null %}{{ entity.branchType.name }}{% endif %}</td>
+                        <td>{{ entity.createdDate|date('Y-m-d H:i:s') }}</td>
+                        <td>{% if entity.updatedDate %}{{ entity.updatedDate|date('Y-m-d H:i:s') }}{% else %}-{% endif %}</td>
+                        <td>
+                            <a href="{{ path('branch_update', {'id': entity.id}) }}" style="font-size: 16px">
+                                <span class="glyphicon glyphicon-pencil"></span>
+                            </a>
+                            <a href="{{ path('branch_delete', {'id': entity.id}) }}"
+                               onclick="if(!confirm('Итгэлтэй байна уу?'))return false;" style="font-size: 16px">
+                                <span class="glyphicon glyphicon-trash"></span>
+                            </a>
+                        </td>
+                    </tr>
+
+                    {% if entity.children is defined %}
+                        {{ template.branches(entity.children,0) }}
+                    {% endif %}
+
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}
+{% block js %}
+    <script src="{{ asset('assets/js/cookie.js') }}"></script>
+    <script>
+        $(document).ready(function () {
+            $('#searchlink').click(function () {
+                $('#searchpad').toggle();
+            });
+        });
+
+        var openData = $.cookie("opendata");
+        var res = openData.split(",");
+        for (var i = 0, l = res.length; i < l; i++) {
+            if (res[i] != 'NaN') {
+                $('#data' + res[i]).data("status", "open").show();
+                $('#plus' + res[i]).removeClass('glyphicon-plus').addClass('glyphicon-minus');
+                $('.table tr').each(function () {
+                    var parentId = $(this).data('parent');
+                    if (parentId == res[i]) {
+                        $(this).show();
+                    }
+                });
+            }
+        }
+
+        function openAll() {
+            $('.childrens').each(function () {
+                var id = ($(this).attr("data-id"));
+                $(this).show();
+                $('#plus' + id).removeClass('glyphicon-plus').addClass('glyphicon-minus');
+                addIdToOpenDataArr(id);
+            });
+
+            $('.parent').each(function () {
+                var id = ($(this).attr("data-id"));
+                $('#plus' + id).removeClass('glyphicon-plus').addClass('glyphicon-minus');
+                addIdToOpenDataArr(id);
+            });
+
+
+        }
+
+        function closeAll() {
+            $('.childrens').each(function () {
+                var id = ($(this).attr("data-id"));
+                $(this).hide();
+                $('#plus' + id).removeClass('glyphicon-minus').addClass('glyphicon-plus');
+                removeIdFromOpenDataArr(id);
+            });
+
+            $('.parent').each(function () {
+                var id = ($(this).attr("data-id"));
+                $('#plus' + id).removeClass('glyphicon-minus').addClass('glyphicon-plus');
+                addIdToOpenDataArr(id);
+            });
+
+        }
+
+
+        function openCloseChild(id, $el) {
+            if ($el.data('status') == "close") {
+                $el.children().removeClass('glyphicon-plus').addClass('glyphicon-minus');
+                $('.table tr').each(function () {
+                    var parentId = $(this).data('parent');
+                    if (parentId == id) {
+                        $(this).show();
+                    }
+                });
+                $el.data("status", "open");
+                $el.attr("data-status", "open");
+
+                addIdToOpenDataArr(id);
+            }
+            else {
+                $el.children().removeClass('glyphicon-minus').addClass('glyphicon-plus');
+                $('.table tr').each(function () {
+                    var parentId = $(this).data('parent');
+                    if (parentId == id) {
+                        $(this).hide();
+                    }
+                });
+                $el.data("status", "close");
+                $el.attr("data-status", "close");
+                removeIdFromOpenDataArr(id);
+            }
+        }
+
+        function getOpenDataArr() {
+            var opendataStr = $.cookie("opendata");
+            if (!opendataStr) opendataStr = "";
+
+            return $.map(opendataStr.split(","), function (n) {
+                return parseInt(n);
+            });
+        }
+
+        function setOpenDataArr(opendataStr) {
+            $.cookie("opendata", opendataStr.join(","))
+        }
+
+        function addIdToOpenDataArr(id) {
+            var openData = getOpenDataArr();
+            openData.push(id);
+            setOpenDataArr(openData);
+        }
+
+        function removeIdFromOpenDataArr(id) {
+            setOpenDataArr($.grep(getOpenDataArr(), function (r) {
+                return r != id;
+            }));
+        }
+
+    </script>
+
+{% endblock %}

@@ -1,0 +1,3 @@
+services:
+   md5_nosalt_encoder:
+        class: incentive\AppBundle\Security\PasswordEncoder

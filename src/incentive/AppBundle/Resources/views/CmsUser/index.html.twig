@@ -1,0 +1,102 @@
+{% extends '@incentiveApp/base.html.twig' %}
+{% block body %}
+    <div class="row">
+        {% include '@incentiveApp/inc/flashmsg.html.twig' %}
+        <div class="col-xs-12 col-md-6">
+            <h2>{{ title }}</h2>
+        </div>
+
+
+        <div class="col-xs-12 col-md-6 text-right">
+            <a href="javascript:void(0)" id="searchlink"
+               class="btn btn-primary btn-rounded">Хайлт &DownArrowUpArrow;</a>
+            <a href="{{ path('cms_user_hrm_new') }}" class="btn btn-primary btn-rounded"
+               onclick="if(!confirm('HRM-с ажилтан татахад давхардаж буй ажилтнуудын мэдээлэл өөрчлөгдөн HRM дээрх шиг болохыг анхаарна уу! Итгэлтэй байна уу?'))return false;">HRM-с ажилтан татах</a>
+            <a href="{{ path('cms_user_new') }}" class="btn btn-primary btn-rounded">Шинээр нэмэх</a>
+        </div>
+        <div class="col-xs-12 col-md-12 text-right">
+            <fieldset
+                    style="margin-top:20px;border:1px solid #ddd;{%if search%}display:block{%else%}display:none;{% endif %}"
+                    id="searchpad">
+                {% include '@incentiveApp/inc/search.html.twig' with {'route' : pageRoute} %}
+            </fieldset>
+        </div>
+        <div class="col-xs-12 col-md-12">
+            <table class="table table-bordered table-hover dataTable" role="grid" id="table">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Нэвтрэх нэр</th>
+                    <th>Овог нэр</th>
+                    <th>Утас</th>
+                    <th>Салбар</th>
+                    <th>Хандах эрх</th>
+                    <th>Төлөв</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for key,user in data %}
+                    <tr>
+                        <td>
+                            {{ ((page - 1) * pagesize) + key + 1 }}
+                        </td>
+                        <td>{{ user.username }}</td>
+                        <td>{% if user.lastname and user.firstname %}{{ user.lastname }} -н {{ user.firstname }}{% else %} - {% endif %}</td>
+                        <td>{{ user.mobile }}</td>
+                        <td>{% if user.branch %}{{ user.branch.name }}{% else %}-{% endif %}</td>
+                        <td>{% for role in user.roles %} {% if role != 'ROLE_CMS_USER' %}{{ role }} {% endif %}{% endfor %} </td>
+                        <td>
+                            {% if user.enabled  == 1 %}
+                                <p style="color: green">Идэвхитэй</p>
+                            {% else %}
+                                <p style="color: red">Идэвхигүй</p>
+                            {% endif %}
+                        </td>
+                        <td>
+
+                            <a href="{{ path("cms_user_edit_enable", {'id' : user.id}) }}"
+                               title="Төлөв өөрчлөх" style="font-size: 16px;margin-right: 10px"> <i
+                                        class="glyphicon glyphicon-adjust"></i></a>
+
+                            <a href="{{ path('cms_user_edit_role', {'id': user.id }) }}"
+                               title="Хандах эрх өөрчлөх" style="font-size: 16px;margin-right: 10px"><i
+                                        class="glyphicon glyphicon-user"></i></a>
+
+                            <a href="{{ path('cms_user_edit_password', {'id': user.id}) }}"
+                               title="Нууц үг солих" style="font-size: 16px;margin-right: 10px"><i
+                                        class="glyphicon glyphicon-lock"></i></a>
+
+                            <a href="{{ path('cms_user_edit', {'id': user.id}) }}"
+                               title="Салбар солих" style="font-size: 16px;margin-right: 10px"><i
+                                        class="glyphicon glyphicon-refresh"></i></a>
+
+
+                            <a title="Устгах"
+                               onclick="if(!confirm('Are you sure?'))return false;"
+                               href="{{ path('cms_user_delete', {'id': user.id}) }}"
+                               style="font-size: 16px;margin-right: 10px">
+                                <i class="glyphicon glyphicon-trash"></i>
+                            </a>
+
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+
+            {% include '@incentiveApp/inc/page.html.twig' with {'route' : pageRoute} %}
+
+        </div>
+    </div>
+{% endblock %}
+
+{% block js %}
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#searchlink').click(function () {
+                $('#searchpad').toggle();
+            });
+        });
+    </script>
+{% endblock %}

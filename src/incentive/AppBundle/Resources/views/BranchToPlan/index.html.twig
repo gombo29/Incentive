@@ -1,0 +1,242 @@
+{% import _self as template %}
+{% extends '@incentiveApp/base.html.twig' %}
+
+{% macro branches(entities,level) %}
+    {% import _self as template %}
+    {% for entity in entities %}
+        <tr class="childrens" id="data{{ entity.id }}" data-id="{{ entity.id }}" data-parent="{{ entity.parent.id }}" style="display: none" data-ischild="{% if entity.children|length > 0 %}Yes{% else %}No{% endif %}">
+            <td style="width:10px;">
+                <input id="check{{ entity.id }}" data-id="{{ entity.id }}" onclick="checkedBranches($(this))" data-parent="{{ entity.parent.id }}" class="datas" type="checkbox" name="questions[]" value="{{ entity.id }}" {% if entity.selected == true %} checked {% endif %}></td>
+            <td>{{ entity.id }}</td>
+            <td>{% if entity.children|length > 0 %}<a data-status="close" href="#" onclick="openCloseChild({{ entity.id }},$(this))" id="event{{ entity.id }}"><i style="font-size: 16px" id="plus{{ entity.id }}" class="glyphicon glyphicon-plus"></i></a>{% endif %} {% for i in 0..level+1 %}--------{% endfor %}{{ entity.name }}</td>
+        </tr>
+        {% if entity.children is defined %}
+            {{ template.branches(entity.children, level+1) }}
+        {% endif %}
+    {% endfor %}
+{% endmacro %}
+
+{% block body %}
+    <div class="row">
+        {% include '@incentiveApp/inc/flashmsg.html.twig' %}
+        <div class="col-xs-12 col-md-6">
+            <h2>{{ title }}</h2>
+        </div>
+        <div class="col-xs-12 col-md-12">
+            <a href="#" onclick="openAll()"> + Бүгдийг нээх</a>
+            <a href="#" onclick="closeAll()"> - Бүгдийг хаах</a>
+            <form action="{{ path('branch_add_to_plan', {'id': planId}) }}" method="post">
+                <table class="table table-bordered">
+                    <thead>
+                    <tr>
+                        <th><input type="checkbox" id="checkall" value="-1"></th>
+                        <th>#</th>
+                        <th>Нэр</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for entity in data %}
+                        <tr id="data{{ entity.id }}" data-id="{{ entity.id }}" class="parent">
+                            <td style="width:10px;"><input type="checkbox" class="datas" name="questions[]" data-id="{{ entity.id }}" value="{{ entity.id }}" onclick="checkedBranches($(this))"
+                                        {% if entity.selected == true %} checked {% endif %}></td>
+                            <td>{{ entity.id }}</td>
+                            <td><a href="#" data-status="close" onclick="openCloseChild({{ entity.id }}, $(this))" id="event{{ entity.id }}"><i style="font-size: 16px" id="plus{{ entity.id }}" class="glyphicon glyphicon-plus"></i></a>  {{ entity.name }}</td>
+                        </tr>
+
+                        {% if entity.children is defined %}
+                            {{ template.branches(entity.children, 0) }}
+                        {% endif %}
+
+                    {% endfor %}
+                    </tbody>
+                </table>
+                <input class="btn btn-primary btn-rounded" type="submit" value="Хадгалах"/>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js %}
+    <script src="{{ asset('assets/js/cookie.js') }}"></script>
+    <script>
+
+        // Бүгдийг select хийх
+        $('#checkall').change(function() {
+            if($(this).is(":checked")) {
+                $('.datas').each(function () {
+                    $(this).prop('checked', true)
+                });
+            }else
+            {
+                $('.datas').each(function () {
+                    $(this).prop('checked', false)
+                });
+            }
+        });
+
+        // Сонгож select хийх, хүүхдүүдийг мөн select хийнэ
+       function checkedBranches($el) {
+           var id = $el.data("id");
+           var listArr = getChildrenId(id);
+           if ($el.is(":checked")) {
+               for (var i = 0; i <= listArr.length; i++) {
+                   $("#check"+ listArr[i]).prop('checked', true)
+               }
+           } else {
+               for (var i = 0; i <= listArr.length; i++) {
+                   $("#check"+ listArr[i]).prop('checked', false)
+               }
+           }
+       }
+
+
+        var openData = $.cookie("opendataAdd");
+        var res = openData.split(",");
+        for (var i = 0, l = res.length; i < l; i++) {
+            if (res[i] != 'NaN') {
+                $('#data' + res[i]).show();
+                $('#plus' + res[i]).removeClass('glyphicon-plus').addClass('glyphicon-minus');
+                $('#event' + res[i]).data("status", "close");
+                $('.table tr').each(function () {
+                    var parentId = $(this).data('parent');
+                    if (parentId == res[i]) {
+                        $(this).show();
+                    }
+                });
+            }
+        }
+
+        // Бүгдийг нээх
+        function openAll()
+        {
+            $('.childrens').each(function () {
+                var id = ($(this).attr("data-id"));
+                $(this).show();
+                $('#plus' + id).removeClass('glyphicon-plus').addClass('glyphicon-minus');
+                addIdToOpenDataArr(id);
+            });
+
+            $('.parent').each(function () {
+                var id = ($(this).attr("data-id"));
+                $('#plus' + id).removeClass('glyphicon-plus').addClass('glyphicon-minus');
+                addIdToOpenDataArr(id);
+            });
+
+
+        }
+
+        // Бүгдийг хаах
+        function closeAll()
+        {
+            $('.childrens').each(function () {
+                var id = ($(this).attr("data-id"));
+                $(this).hide();
+                $('#plus' + id).removeClass('glyphicon-minus').addClass('glyphicon-plus');
+                removeIdFromOpenDataArr(id);
+            });
+
+            $('.parent').each(function () {
+                var id = ($(this).attr("data-id"));
+                $('#plus' + id).removeClass('glyphicon-minus').addClass('glyphicon-plus');
+                removeIdFromOpenDataArr(id);
+            });
+
+
+        }
+
+        // Нээж хаах
+        function openCloseChild(id, $el) {
+            var listArr = getChildrenId(id);
+            if ($el.data('status') == "close") {
+                childShow(listArr, id)
+            }
+            else {
+                childClose(listArr , id)
+            }
+        }
+
+        // Бүх хүүхдүүд болон тэдгээрийн хүүхдүүдийг авах
+        function getChildrenId(parId)
+        {
+            var childrensArr = [];
+            $('.table tr').each(function () {
+                var parentId = $(this).data('parent');
+                var child_id = $(this).data('id');
+                var ischild = $(this).data('ischild');
+                if (parentId == parId) {
+                    childrensArr.push(child_id);
+                    if(ischild == "Yes")
+                    {
+                        var childArr =  getChildrenId(child_id);
+                        for( var m =0; m <=childArr.length; m++) {
+                                childrensArr.push(childArr[m]);
+                        }
+                    }
+                }
+            });
+            return childrensArr;
+        }
+
+
+        // Бүх хүүхдүүд болон тэдгээрийн хүүхдүүдийг харуулах
+        function childShow(ids, id) {
+
+            for (var i = 0; i <= ids.length; i++) {
+                $('#data' + ids[i]).show();
+                $('#plus' + ids[i]).removeClass('glyphicon-plus').addClass('glyphicon-minus');
+                $('#event' + ids[i]).data("status", "open");
+                addIdToOpenDataArr(ids[i]);
+            }
+
+            addIdToOpenDataArr(id);
+            $('#plus' + id).removeClass('glyphicon-plus').addClass('glyphicon-minus');
+            $('#event' + id).data("status", "open");
+        }
+
+        // Бүх хүүхдүүд болон тэдгээрийн хүүхдүүдийг хаах
+        function childClose(ids, id) {
+            for (var i = 0; i <= ids.length; i++) {
+                $('#data' + ids[i]).hide();
+                $('#plus' + ids[i]).removeClass('glyphicon-minus').addClass('glyphicon-plus');
+                $('#event' + ids[i]).data("status", "close");
+                removeIdFromOpenDataArr(ids[i]);
+            }
+            removeIdFromOpenDataArr(id);
+            $('#plus' + id).removeClass('glyphicon-minus').addClass('glyphicon-plus');
+            $('#event' + id).data("status", "close");
+        }
+
+
+
+// ******************************** Cookie-д нээгдсэн дата хадгалагдаж байна *************************************
+
+        function getOpenDataArr() {
+            var opendataStr = $.cookie("opendataAdd");
+            if (!opendataStr) opendataStr = "";
+
+            return $.map(opendataStr.split(","), function (n) {
+                return parseInt(n);
+            });
+        }
+
+        function setOpenDataArr(opendataStr) {
+            $.cookie("opendataAdd", opendataStr.join(","))
+        }
+
+        // Cookie-д id нэмж байна
+        function addIdToOpenDataArr(id) {
+            var openData = getOpenDataArr();
+            openData.push(id);
+            setOpenDataArr(openData);
+        }
+
+        // Cookie-с id устгаж байна
+        function removeIdFromOpenDataArr(id) {
+            setOpenDataArr($.grep(getOpenDataArr(), function (r) {
+                return r != id;
+            }));
+        }
+
+    </script>
+
+{% endblock %}

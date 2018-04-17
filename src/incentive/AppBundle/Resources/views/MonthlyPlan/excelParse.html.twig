@@ -1,0 +1,11 @@
+{% extends '@incentiveApp/base.html.twig' %}
+{% block pageheader %}Excel хуулах{% endblock %}
+{% block body %}
+    {{ form_start(form) }}
+    {{ form_widget(form) }}
+    <label class="col-sm-2 control-label required" for="upload_excel_excelfile"></label>
+    <div class="col-sm-10">
+        <input class="btn btn-primary btn-rounded" type="submit" value="Хадгалах"/>
+    </div>
+    {{ form_end(form) }}
+{% endblock %}

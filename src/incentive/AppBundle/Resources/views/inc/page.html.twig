@@ -1,0 +1,90 @@
+{% if pagecount>1 %}
+    <div>
+        {% set range=2 %}
+        <ul class="pagination">
+
+            {#  ==== omnoh ==== #}
+            {% if 1<page %}
+                <li class="prev">
+                        <a href="{{ path(route,{'page':page-1}) }}" title="өмнөх">«</a>
+                </li>
+            {% else %}
+                <li class="prev disabled">
+                    <a href="javascript:void(0)" title="өмнөх">«</a>
+                </li>
+            {% endif %}
+
+            {#  ==== huudasnuu dugaaruud ehelj bn  ==== #}
+
+            <li class="{% if 1==page %}active{% endif %}">
+                    <a href="{{ path(route,{'page':1}) }}" title="хуудас 1">1</a>
+            </li>
+
+            {% if page>1+range+1 %}
+                <li class="disabled"><a href="javascript:void(0)">...</a></li>
+            {% endif %}
+
+            {% if pagecount>2 %}
+                {% for i in 2..pagecount-1 %}
+                    {% if i==page %}
+                        <li class="active">
+                            <a href="javascript:void(0)" title="хуудас {{ i }}">{{ i }}</a>
+                        </li>
+                    {% elseif page-range<=i and i<=page+range %}
+                        <li class="">
+                                <a href="{{ path(route,{'page':i}) }}"
+                                   title="хуудас {{ i }}">{{ i }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+
+            {% if page<pagecount-range-1 %}
+                <li class="disabled"><a href="javascript:void(0)">...</a></li>
+            {% endif %}
+
+            <li class="{% if pagecount==page %}active{% endif %}">
+                    <a href="{{ path(route,{'page':pagecount}) }}"
+                       title="хуудас {{ pagecount }}">{{ pagecount }}</a>
+            </li>
+
+            {#  ==== huudasnuu dugaaruud dusaj bn  ==== #}
+
+            {#  ==== daraah ==== #}
+            {% if pagecount>page %}
+                <li class="next ">
+                        <a href="{{ path(route,{'page':page+1}) }}" title="дараах">»</a>
+                </li>
+            {% else %}
+                <li class="next disabled">
+                    <a href="javascript:void(0)" title="дараах">»</a>
+                </li>
+            {% endif %}
+
+            {#  ====niit content count  ==== #}
+            {% if count is defined %}
+                <li class="text-info" style="line-height: 32px;">
+                    &nbsp;&nbsp;&nbsp; нийт {{ count }}
+                </li>
+            {% endif %}
+        </ul>
+    </div>
+    <script>
+        if (window.location.search != '') {
+            $.each($('.pagination a'), function (key, val) {
+                $(this).attr('href', $(this).attr('href') + window.location.search);
+            });
+
+            var link = $('#excel');
+            link.attr('href', link.attr('href') + window.location.search);
+        }
+    </script>
+{% endif %}
+<!--
+count:{{ count }}
+    <br>
+page:{{ page }}
+    <br>
+pagecount:{{ pagecount }}
+    <br>
+-->

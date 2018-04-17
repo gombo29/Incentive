@@ -1,0 +1,8 @@
+{% for key,msgs in app.session.flashBag.all %}
+    {% for msg in msgs %}
+        <div class="alert alert-{{ key }} fade in">
+            <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+            <strong>{{ key|capitalize }}!</strong> {{ msg }}
+        </div>
+    {% endfor %}
+{% endfor %}

@@ -1,0 +1,51 @@
+{% extends '@incentiveApp/base.html.twig' %}
+{% block body %}
+    <div class="row">
+        <div class="col-xs-12 col-md-6">
+            <h2>{{ title }}</h2>
+        </div>
+        <div class="col-xs-12 col-md-6 text-right">
+            <a href="{{ path('product_new') }}" class="btn btn-primary btn-rounded">Шинээр нэмэх</a>
+        </div>
+        <div class="col-xs-12 col-md-12">
+            <table class="table table-bordered">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Нэр</th>
+                    <th>Үүсгэсэн огноо</th>
+                    <th>Зассан огноо</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for entity in data %}
+                    <tr>
+                        <td>{{ entity.id }}</td>
+                        <td>{{ entity.name }}</td>
+                        <td>{{ entity.createdDate|date('Y-m-d H:i:s') }}</td>
+                        <td>{% if entity.updatedDate %}{{ entity.updatedDate|date('Y-m-d H:i:s') }}{% else %}-{% endif %}</td>
+                        <td>
+
+                            {% if is_granted('ROLE_SUPER_ADMIN') %}
+                                <a href="#" title="Томъёо холбох" style="font-size: 16px">
+                                    <span class="glyphicon  glyphicon glyphicon-cog"></span>
+                                </a>
+                            {% endif %}
+
+                            <a href="{{ path('product_update', {'id': entity.id}) }}">
+                                <span class="glyphicon glyphicon-pencil"></span>
+                            </a>
+                            <a href="#"
+                               onclick="if(!confirm('Итгэлтэй байна уу?'))return false;">
+                                <span class="glyphicon glyphicon-trash"></span>
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+{% endblock %}

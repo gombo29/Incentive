@@ -1,0 +1,150 @@
+<nav class="navbar navbar-default">
+    <div class="container">
+        <div class="navbar-header">
+
+            <!-- Collapsed Hamburger -->
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
+                    data-target="#app-navbar-collapse">
+                <span class="sr-only">Toggle Navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+
+        </div>
+
+        <div class="collapse navbar-collapse" id="app-navbar-collapse">
+            <!-- Left Side Of Navbar -->
+            <ul class="nav navbar-nav">
+                <li>
+                    <a href="//172.22.2.102/index.html">Нүүр</a>
+                </li>
+                <li>
+                    <a href="//172.22.2.102/cctraining.html">Сургалт</a>
+                </li>
+                <li>
+                    <a href="http://exam.tuslakh/exams">
+                        Шалгалт
+                    </a>
+                </li>
+
+                <li>
+                    <a href="//172.22.2.102/serviceinfo.html">Service Info</a>
+                </li>
+                <li>
+                    <a href="//172.22.2.102/helpdesk.html">Help Desk</a>
+                </li>
+                {#<li>#}
+                {#<a href="//172.22.2.102/ccincentive.html">Incentive</a>#}
+                {#</li>#}
+                <li class="dropdown">
+                    <a href="{{ path('home_page') }}" class="dropdown-toggle">
+                        Incentive
+                    </a>
+
+                    <ul class="dropdown-menu" role="menu">
+                        <li>
+                            <a href="{{ path('home_page') }}">Нүүр</a>
+                        </li>
+                        <li role="separator" class="divider"></li>
+                        <li>
+                            <a href="{{ path('plan_home') }}">
+                                Төлөвлөгөө
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="#">
+                                Гүйцэтгэл
+                            </a>
+                        </li>
+
+                        <li>
+                            <a href="#">
+                                Incentive
+                            </a>
+                        </li>
+                        {% if is_granted('ROLE_SUPER_ADMIN') %}
+                            <li role="separator" class="divider"></li>
+                            <li>
+                                <a href="{{ path('product_home') }}">
+                                    Бүтээгдэхүүн
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ path('product_type_home') }}">
+                                    Бүтээгдэхүүн ангилал
+                                </a>
+                            </li>
+                            <li role="separator" class="divider"></li>
+                            <li>
+                                <a href="{{ path('branch_home') }}">
+                                    Салбар, нэгж
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ path('job_title_home') }}">
+                                    Албан тушаал
+                                </a>
+                            </li>
+                            {#<li>#}
+                            {#<a href="{{ path('user_home') }}">#}
+                            {#Ажилтан#}
+                            {#</a>#}
+                            {#</li>#}
+                            <li role="separator" class="divider"></li>
+                            <li>
+                                <a href="{{ path('cms_user_home') }}">
+                                    Ажилтан
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </li>
+                <li>
+                    <a href="//172.22.2.102/ccsseawards.html">SSE Awards</a>
+                </li>
+                <li class="dropdown">
+                    <a href="//kpi.tuslakh">Гүйцэтгэлийн үнэлгээ</a>
+                </li>
+            </ul>
+
+            <!-- Right Side Of Navbar -->
+            <ul class="nav navbar-nav navbar-right">
+                <!-- Authentication Links -->
+                <li>
+                    <a href="{{ path('fos_user_security_logout') }}">
+                        Гарах
+                    </a>
+
+                    <form id="logout-form" action="http://exam.tuslakh/logout" method="POST" style="display: none;">
+                        <input name="_token" value="v28WPAra3QieVv12FyTY1V7I2V4tLfF96EKIvGE2" type="hidden">
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div class="top-bar">
+        <div class="container">
+            <div class="row">
+                <div class="col-xs-12 col-md-8">
+                    <div class="logo">
+                        <a href="{{ path('home_page') }}"><img src="http://exam.tuslakh/images/logo.png"
+                                                               alt="Incentive хэсэг"></a>
+                    </div>
+                </div>
+                {% if app.user %}
+                    <div class="col-md-4">
+                        <div class="user-info">
+                            <div class="portrait">
+                                <img src="http://static/evseg_new/anket/10135.jpg" alt="">
+                            </div>
+                            <h4>{{ app.user.username }}</h4>
+                            <div>{{ role }}</div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</nav>

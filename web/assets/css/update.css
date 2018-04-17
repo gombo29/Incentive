@@ -1,0 +1,9 @@
+#searchForm {
+    margin-top: 20px;
+}
+
+#searchForm .form-group {
+    width: 100%;
+    text-align: left;
+    padding: 10px;
+}

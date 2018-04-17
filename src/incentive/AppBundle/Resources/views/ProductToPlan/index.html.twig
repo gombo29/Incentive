@@ -1,0 +1,34 @@
+{% extends '@incentiveApp/base.html.twig' %}
+{% block body %}
+    <div class="row">
+
+        {% include '@incentiveApp/inc/flashmsg.html.twig' %}
+        <div class="col-xs-12 col-md-6">
+            <h2>{{ title }}</h2>
+        </div>
+        <div class="col-xs-12 col-md-12">
+            <form action="{{ path('product_add_to_plan' ,{'id' :  planId}) }}" method="post">
+                <table class="table table-bordered">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th>#</th>
+                        <th>Нэр</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for entity in data %}
+                        <tr>
+                            <td style="width:10px;"><input type="checkbox" name="questions[]" value="{{ entity.id }}"
+                                        {% if entity.selected == true %} checked {% endif %}></td>
+                            <td>{{ entity.id }}</td>
+                            <td>{{ entity.name }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                <input class="btn btn-primary btn-rounded" type="submit" value="Хадгалах"/>
+            </form>
+        </div>
+    </div>
+{% endblock %}

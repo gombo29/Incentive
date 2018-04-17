@@ -1,0 +1,146 @@
+{% extends '@incentiveApp/base.html.twig' %}
+{% block body %}
+    <div class="row">
+        <div class="col-xs-12 col-md-8">
+            <h4>Тавтай морилно уу!</h4>
+        </div>
+        {% if is_granted('ROLE_CMS_STAFF') %}
+        {% elseif is_granted('ROLE_SUPER_ADMIN') %}
+        {% else %}
+            {% if plandata|length > 0 %}
+                <div class="col-xs-12 col-md-8" style="overflow: scroll">
+
+                    {% for key ,entity in plandata %}
+                        <h5 style="color: green;">" {{ entity.name }} " нэртэй төлөвлөгөө идэвхитэй байна. <a
+                                    href="{{ path('monthly_plan_home', {'id' : entity.id}) }}">Энд дарж</a>
+                            төлөвлөгөө оруулна уу</h5>
+
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="col-xs-12 col-md-8" style="overflow: scroll">
+                    <h5 style="color: red">Одоогоор идэвхитэй төлөвлөгөө байхгүй байна.</h5>
+                </div>
+            {% endif %}
+        {% endif %}
+
+
+        {% if is_granted('ROLE_CMS_STAFF') == false %}
+            {% if plandata|length > 0 %}
+                <div class="col-xs-12 col-md-12">
+                    <h4>Төлөвлөгөө өгсөн эсэх</h4>
+                    <table class="table table-bordered">
+                        <thead>
+                        <tr>
+                            <th>№</th>
+                            <th>Салбар, нэгж нэр</th>
+                            <th>Өгсөн эсэх</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for key ,entity in selectedBranches %}
+                            <tr>
+                                <td>{{ key + 1 }}</td>
+                                <td>{{ entity.branch.name }}</td>
+                                <td>{% if entity.isThere == true %}<i style="color: green">Тийм </i>{% else %}<i
+                                            style="color: red">Үгүй</i>{% endif %}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        {% else %}
+            <p>Tiim bn shuu dee</p>
+        {% endif %}
+
+        <div class="col-xs-12 col-md-8">
+            {#<h3>Статистик</h3>#}
+            {#<div>#}
+            {#<canvas id="canvas"></canvas>#}
+            {#</div>#}
+        </div>
+    </div>
+{% endblock %}
+    {% block js %}
+
+        <script src="{{ asset("assets/chart/chart.bundle.js") }}"></script>
+        <script src="{{ asset("assets/chart/utils.js") }}"></script>
+
+        <script>
+            var config = {
+                type: 'line',
+                data: {
+                    labels: ['1 сар', '2 сар', '3 сар', '4 сар', '5 сар', ' 6 сар', '7 сар'],
+                    datasets: [{
+                        label: 'Газар 1',
+                        fill: false,
+                        backgroundColor: window.chartColors.blue,
+                        borderColor: window.chartColors.blue,
+                        data: [
+                            randomScalingFactor(),
+                            randomScalingFactor(),
+                            randomScalingFactor(),
+                            randomScalingFactor(),
+                            randomScalingFactor(),
+                            randomScalingFactor(),
+                            randomScalingFactor()
+                        ],
+                    }, {
+                        label: 'Газар 2',
+                        fill: false,
+                        backgroundColor: window.chartColors.green,
+                        borderColor: window.chartColors.green,
+                        borderDash: [5, 5],
+                        data: [
+                            randomScalingFactor(),
+                            randomScalingFactor(),
+                            randomScalingFactor(),
+                            randomScalingFactor(),
+                            randomScalingFactor(),
+                            randomScalingFactor(),
+                            randomScalingFactor()
+                        ],
+                    },
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    title: {
+                        display: false,
+                        text: 'Chart.js Line Chart'
+                    },
+                    tooltips: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    hover: {
+                        mode: 'nearest',
+                        intersect: true
+                    },
+                    scales: {
+                        xAxes: [{
+                            display: true,
+                            scaleLabel: {
+                                display: false,
+                                labelString: 'Month'
+                            }
+                        }],
+                        yAxes: [{
+                            display: true,
+                            scaleLabel: {
+                                display: true,
+                                labelString: 'Биелэлт'
+                            }
+                        }]
+                    }
+                }
+            };
+
+            window.onload = function () {
+                var ctx = document.getElementById('canvas').getContext('2d');
+                window.myLine = new Chart(ctx, config);
+            };
+        </script>
+
+    {% endblock %}

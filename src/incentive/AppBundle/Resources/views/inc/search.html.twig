@@ -1,0 +1,27 @@
+<style>
+    .form-inline .form-group label {
+        margin-right: 10px;
+    }
+</style>
+
+<form class="form-inline" action="{{ path(route, {'page' : 1}) }}" method="get" {{ form_enctype(searchform) }} id="searchForm">
+
+    {{ form_errors(searchform) }}
+    {{ form_rest(searchform) }}
+
+    <div class="col-sm-12" style="text-align: center;margin-top: 10px; margin-bottom: 10px">
+        <button class="btn btn-primary btn-rounded" type="submit" name="submit"
+                value="submit">{{ 'Хайх'|trans }}</button>
+        <a href="javascript:void(0)" class="btn btn-primary btn-rounded" onclick="resetSearchData()">Арилгах</a>
+
+    </div>
+    <div style="clear:both;"></div>
+</form>
+
+<script>
+    function resetSearchData() {
+        $.each($('.form-control'), function (key, val) {
+            $(this).val('');
+        });
+    }
+</script>

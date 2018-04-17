@@ -1,0 +1,818 @@
+{% import _self as template %}
+{% extends '@incentiveApp/base.html.twig' %}
+
+{% block css %}
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/css/bootstrap-select.min.css">
+
+    <style>
+        .bootstrap-select > .dropdown-toggle.bs-placeholder, .bootstrap-select > .dropdown-toggle.bs-placeholder:active, .bootstrap-select > .dropdown-toggle.bs-placeholder:focus, .bootstrap-select > .dropdown-toggle.bs-placeholder:hover {
+            color: #FFFFFF;
+        }
+
+        .staff-arrow {
+            display: inline-block;
+            position: relative;
+            height: 35px;
+            vertical-align: top;
+        }
+
+        .staff-input {
+            width: 80px;
+            display: inline-block;
+        }
+
+        .staff-arrow-i {
+            left: -12px;
+            top: 20px;
+        }
+
+        .staff-inp-dev {
+            position: relative;
+            display: inline-block;
+        }
+
+        .staff-inp-dev a {
+            position: absolute;
+            display: inline-block;
+            top: 0;
+            right: 5px;
+        }
+
+    </style>
+{% endblock %}
+
+{% macro branches(selectedBranches, selectedProducts, mplan, level) %}
+    {% import _self as template %}
+    {% for branch in selectedBranches %}
+        {% set isPlan = false %}
+        <tr class="childrens" id="data{{ branch.branchId }}" data-id="{{ branch.branchId }}"
+            data-parent="{{ branch.parentId }}" style="display: none"
+            data-ischild="{% if branch.children|length > 0 %}Yes{% else %}No{% endif %}">
+            {% for key, plan in mplan %}
+                {% if branch.branchId == key %}
+                    {% set isPlan = true %}
+                    <td>{% if branch.children|length > 0 %}<a data-status="close" href="#"
+                                                              onclick="openCloseChild({{ branch.branchId }},$(this))"
+                                                              id="event{{ branch.branchId }}"><i
+                                    id="plus{{ branch.branchId }}" style="font-size: 16px"
+                                    class="glyphicon glyphicon-plus"></i>
+                            </a>{% endif %} {% for i in 0..level+1 %}----{% endfor %}{{ branch.name }}
+                        {% if branch.children|length == 0 %}
+                            <a title="Ажилтан харах" id="staff{{ branch.branchId }}"
+                               style="font-size: 16px" href="#"
+                               onclick="showStaffs({{ branch.branchId }}, [{% for pro in selectedProducts %} {{ pro.productId }} {% if loop.last == false %},{% endif %}{% endfor %}])">
+                                <i class="glyphicon glyphicon-eye-open"></i></a>
+
+                            <a title="Ажилтан нэмэх"
+                               style="font-size: 16px" href="#" onclick="addStaffs({{ branch.branchId }})">
+                                <i class="glyphicon glyphicon-plus"></i></a>
+                        {% endif %}
+
+                    </td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    {% for product in selectedProducts %}
+                        {% for mproduct in plan.products %}
+                            {% if mproduct.productId == product.productId %}
+                                <td>
+                                    <input data-monthly-plan="{{ mproduct.branchDataId }}" value="{{ mproduct.value }}"
+                                           type="text" style="width: 80px" disabled class="monthlyValue form-control">
+                                </td>
+                            {% endif %}
+                        {% endfor %}
+                    {% endfor %}
+                {% endif %}
+            {% endfor %}
+            {% if isPlan == false %}
+                <td>
+                    {% if branch.children|length > 0 %}
+                        <a data-status="close" href="#" onclick="openCloseChild({{ branch.branchId }},$(this))"
+                           id="event{{ branch.branchId }}"><i style="font-size: 16px" id="plus{{ branch.branchId }}"
+                                                              class="glyphicon glyphicon-plus"></i></a>
+                    {% endif %}
+                    {% for i in 0..level+1 %}----{% endfor %}{{ branch.name }} </td>
+                <td>-</td>
+                <td>-</td>
+                <td>-</td>
+                {% for product in selectedProducts %}
+                    <td>
+                        -
+                    </td>
+                {% endfor %}
+            {% endif %}
+        </tr>
+        {% if branch.children is defined %}
+            {{ template.branches(branch.children, selectedProducts, mplan,level +1) }}
+        {% endif %}
+
+
+    {% endfor %}
+
+{% endmacro %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-xs-12 col-md-6">
+            <h2>{{ title }}</h2>
+        </div>
+        <div class="col-xs-12 col-md-6 text-right">
+            <a href="#" class="btn btn-primary btn-rounded" onclick="editable()" id="editab le"> <i
+                        class="glyphicon glyphicon-edit"></i> Засах</a>
+            <a href="#" class="btn btn-primary btn-rounded" onclick="closable()" id="closable" style="display: none;">
+                <i class="glyphicon glyphicon-remove"></i> Болих</a>
+
+            {% if is_granted('ROLE_SUPER_ADMIN')  == false %}
+                <a href="{{ path('create_excel', {'id': id}) }}" class="btn btn-primary btn-rounded"> <i
+                            class="glyphicon glyphicon-download"></i> Excel загвар татах</a>
+                <a href="{{ path('upload_excel', {'id': id}) }}" class="btn btn-primary btn-rounded"><i
+                            class="glyphicon glyphicon-upload"></i> Хуулах</a>
+            {% endif %}
+        </div>
+        <div class="col-xs-12 col-md-12" style="overflow: scroll">
+
+
+            <a href="#" onclick="openAll()"> + Бүгдийг нээх</a>
+            <a href="#" onclick="closeAll()"> - Бүгдийг хаах</a>
+            <table class="table table-bordered">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Цагын <br>фонд</th>
+                    <th>Амралттай <br> цаг</th>
+                    <th>Төлөвлөгөө <br>хувь</th>
+                    {% for product in selectedProducts %}
+                        <th>
+                            {{ product.name }}
+                        </th>
+                    {% endfor %}
+                </tr>
+                </thead>
+                <tbody>
+                {% for branch in selectedBranches %}
+                    {% set isPlan = false %}
+                    <tr id="data{{ branch.branchId }}" data-id="{{ branch.branchId }}" class="parent">
+                        {% for key, plan in mplan %}
+                            {% if branch.branchId == key %}
+                                {% set isPlan = true %}
+                                <td><a href="#" data-status="close"
+                                       onclick="openCloseChild({{ branch.branchId }}, $(this))"
+                                       id="event{{ branch.branchId }}"><i style="font-size: 16px"
+                                                                          id="plus{{ branch.branchId }}"
+                                                                          class="glyphicon glyphicon-plus"></i></a>{{ branch.name }}
+                                    {% if branch.children|length == 0 %}<a title="Ажилтан харах"
+                                                                           id="staff{{ branch.branchId }}"
+                                                                           style="font-size: 16px" href="#"
+                                                                           onclick="showStaffs({{ branch.branchId }}, [{% for pro in selectedProducts %} {{ pro.productId }} {% if loop.last == false %},{% endif %}{% endfor %}] )">
+                                            <i class="glyphicon glyphicon-eye-open"></i></a>
+
+                                        <a title="Ажилтан нэмэх"
+                                           style="font-size: 16px" href="#" onclick="addStaffs({{ branch.branchId }})">
+                                            <i class="glyphicon glyphicon-plus"></i></a>
+                                    {% endif %}</td>
+                                <td>-</td>
+                                <td>-</td>
+                                <td>-</td>
+                                {% for product in selectedProducts %}
+                                    {% for mproduct in plan.products %}
+                                        {% if mproduct.productId == product.productId %}
+                                            <td>
+                                                <input data-monthly-plan="{{ mproduct.branchDataId }}"
+                                                       value="{{ mproduct.value }}" type="text" style="width: 80px"
+                                                       class="monthlyValue form-control" disabled>
+                                            </td>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endfor %}
+                            {% endif %}
+                        {% endfor %}
+                        {% if isPlan == false %}
+                            <td><a href="#" data-status="close" onclick="openCloseChild({{ branch.branchId }}, $(this))"
+                                   id="event{{ branch.branchId }}"><i id="plus{{ branch.branchId }}"
+                                                                      class="glyphicon glyphicon-plus"></i></a>{{ branch.name }}
+                            </td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>-</td>
+                            {% for product in selectedProducts %}
+                                <td>
+                                    -
+                                </td>
+                            {% endfor %}
+                        {% endif %}
+                    </tr>
+
+                    {% if branch.children is defined %}
+                        {{ template.branches(branch.children, selectedProducts, mplan, 0) }}
+                    {% endif %}
+
+
+                {% endfor %}
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+{% endblock %}
+
+{% block modal %}
+    <div class="modal fade" id="alertModal" tabindex="-1" role="dialog" aria-hidden="false" data-keyboard="false"
+         data-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered modal-sm" role="document" style="margin: 350px auto;">
+            <div class="modal-content">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4>Уншиж байна...</h4>
+                    </div>
+                    <div class="modal-body">
+                        <img src="{{ asset('assets/images/loading.gif') }}" style="width: 100%">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal fade" id="staffModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered modal-md" role="document" style="margin: 350px auto;">
+            <div class="modal-content">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 style="display: inline-block">Ажилтан нэмэх</h4>
+                        <button type="button" class="close" data-dismiss="modal"><i
+                                    class="glyphicon glyphicon-remove"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <select class="form-control selectpicker" id="branchStaffs" data-live-search="true"
+                                title="Салбар сонгоно уу...">
+                            {% for branch in allLastBranches %}
+                                <option value="{{ branch.branchId }}"> {{ branch.branchName }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="checkbox" style="margin-left: 40%;">
+                            <label><input id="checkallStaffs" type="checkbox" value="0" name="checkall"
+                                >Бүгдийг сонгох</label>
+                        </div>
+                        <div style="margin-left: 40%;">
+                            {% for staff in allStaffs %}
+                                {% if staff.branchId %}
+                                    <div class="allstaff checkbox branch{{ staff.branchId }}" style="display: none">
+                                        <label><input class="staffallList stafflist{{ staff.branchId }}" type="checkbox"
+                                                      value="{{ staff.staffId }}"
+                                                      name="allstaffs[]">{{ staff.lastname }} {{ staff.firstname }}
+                                        </label>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <input type="hidden" id="SelectedMainBranch">
+                        <div style="margin-left: 40%;">
+                            <a class="btn btn-primary" id="staffAdd">Хадгалах</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="staffJobTitleModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered modal-md" role="document" style="margin: 350px auto;">
+            <div class="modal-content">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 style="display: inline-block">Ажилтан дээр албан тушаал нэмэх</h4>
+                        <button type="button" class="close" data-dismiss="modal"><i
+                                    class="glyphicon glyphicon-remove"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div style="text-align: center">
+                            {% for entity in jobtitle %}
+                                <div class="radio">
+                                    <label for="radval{{ entity.id }}" class="required">
+                                        <input id="radval{{ entity.id }}" name="regradio" required="required"
+                                               value="{{ entity.id }}"
+                                               type="radio">{{ entity.name }}</label>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <div style="margin-left: 40%;">
+                            <a class="btn btn-primary" id="jobtitlesave">Хадгалах</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+{% block js %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/bootstrap-select.min.js"></script>
+    <script src="{{ asset('assets/js/cookie.js') }}"></script>
+    <script>
+
+        $('#branchStaffs').change(function () {
+
+            $('#checkallStaffs').attr('data-branchId', $(this).val()).prop('checked', false);
+            $('.allstaff').hide();
+            $('.staffallList').each(function () {
+                $(this).prop('checked', false)
+            });
+
+            $selectedVal = $('.branch' + $(this).val());
+            $selectedVal.show();
+            $('#staffAdd').attr('onclick', 'addMonthlyPlanStaff(' + $(this).val() + ')');
+        });
+
+        $('#checkallStaffs').change(function () {
+
+            if ($(this).data('branchid') == 'undefined') {
+                alert('Салбар сонгоно уу...');
+            }
+
+            else {
+                if ($(this).is(":checked")) {
+                    $('.stafflist' + $(this).data('branchid')).each(function () {
+                        $(this).prop('checked', true)
+                    });
+                } else {
+                    $('.stafflist' + $(this).data('branchid')).each(function () {
+                        $(this).prop('checked', false)
+                    });
+                }
+            }
+        });
+
+        $('.selectpicker').selectpicker({
+            style: 'btn-primary',
+            color: '#FFFFFF',
+            size: 12
+        });
+
+
+        function addMonthlyPlanStaff(branchId) {
+
+            var mainBranchId = $('#SelectedMainBranch').val();
+            var selectedStaffs = [];
+            $($(".stafflist" + branchId)).each(function () {
+                if ($(this).is(":checked")) {
+                    selectedStaffs.push($(this).val());
+                }
+            });
+
+            console.log(selectedStaffs);
+            $.ajax({
+                url: '{{ path('insert_staffs_all') }}',
+                data: {
+                    "planId": {{ id }},
+                    "staffIds": selectedStaffs,
+                    "branchId": mainBranchId,
+                },
+                type: "POST",
+                dataType: "JSON"
+            })
+                .done(function (data) {
+                    if (data.code == 0) {
+                        $('#staffModal').modal('hide');
+
+                        hideStaffs(mainBranchId, [{% for pro in selectedProducts %} {{ pro.productId }} {% if loop.last == false %},{% endif %}{% endfor %}])
+                        showStaffs(mainBranchId, [{% for pro in selectedProducts %} {{ pro.productId }} {% if loop.last == false %},{% endif %}{% endfor %}])
+
+                    }
+                    else {
+                        alert('Алдаа гарлаа!');
+                    }
+
+                })
+                .always(function () {
+                });
+
+        }
+
+        function addStaffs(branchId) {
+            $('#checkallStaffs').prop('checked', false);
+            $('.staffallList').each(function () {
+                $(this).prop('checked', false)
+            });
+
+            $('#staffModal').modal('show');
+            $('#SelectedMainBranch').val(branchId);
+        }
+
+        function hideStaffs(branchId, colnumber) {
+            $('.staffBranch' + branchId).remove();
+            $('#staff' + branchId).attr('onclick', 'showStaffs(' + branchId + ', [' + colnumber + '])');
+            $('#staff' + branchId + ' i').attr('class', 'glyphicon glyphicon-eye-open');
+
+        }
+
+        function staffSaveData(staffId, branchId) {
+            $('#staffBtnSave' + staffId).hide();
+            $('#staffBtnUpdate' + staffId).show();
+
+
+            var staffTimefund = $('#staffTimefund' + staffId).val();
+            var staffRestTime = $('#staffRestTime' + staffId).val();
+            var planPercent = $('#planPercent' + staffId).val();
+
+            $('#alertModal').modal('show');
+
+            $.ajax({
+                url: '{{ path('insert_staffs') }}',
+                data: {
+                    "timeFund": staffTimefund,
+                    "relaxTime": staffRestTime,
+                    "valuePercent": planPercent,
+                    "planId": {{ id }},
+                    "staffId": staffId,
+                    "branchId": branchId,
+                },
+                type: "POST",
+                dataType: "JSON"
+            })
+                .done(function (data) {
+                    $('#alertModal').modal('hide');
+                    if (data.code == 0) {
+                        for (var i = 0; i < data.data.length; i++) {
+                            for (var j = 0; j < data.data[i]['productValues'].length; j++) {
+                                $('#staffData' + staffId + data.data[i]['productValues'][j]['productId']).val(Math.round(data.data[i]['productValues'][j]['productValue']));
+                            }
+                        }
+                    }
+                    else {
+                        alert('Алдаа гарлаа!');
+                    }
+
+                })
+                .always(function () {
+                });
+
+
+            $('.staffData' + staffId).attr('disabled', 'disabled');
+        }
+
+        function staffUpdateData(staffId) {
+
+            $('#staffBtnSave' + staffId).show();
+            $('#staffBtnUpdate' + staffId).hide();
+            $('.staffData' + staffId).removeAttr('disabled');
+        }
+
+        function staffDeleteData(id, branchId) {
+            $('#alertModal').modal('show');
+            $.ajax({
+                url: '{{ path('delete_staffs') }}',
+                data: {
+                    "id": id,
+                },
+                type: "DELETE",
+                dataType: "JSON"
+            })
+                .done(function (data) {
+                    if (data.code == 0) {
+                        hideStaffs(branchId, [{% for pro in selectedProducts %} {{ pro.productId }} {% if loop.last == false %},{% endif %}{% endfor %}])
+                        showStaffs(branchId, [{% for pro in selectedProducts %} {{ pro.productId }} {% if loop.last == false %},{% endif %}{% endfor %}])
+                    }
+                    else {
+                        $('#alertModal').modal('hide');
+                        alert('Алдаа гарлаа!');
+                    }
+                })
+                .always(function () {
+                });
+
+
+        }
+
+
+        function showStaffs(branchId, colnumber) {
+            $('#staff' + branchId).attr('onclick', 'hideStaffs(' + branchId + ', [' + colnumber + '])');
+            $('#staff' + branchId + ' i').attr('class', 'glyphicon glyphicon-eye-close');
+
+            $('#alertModal').modal('show');
+
+            var $branch = $('#data' + branchId);
+            $.ajax({
+                url: '{{ path('get_staffs') }}',
+                data: {
+                    "id": branchId,
+                    "planId": {{ id }},
+                },
+                type: "POST",
+                dataType: "JSON"
+            })
+                .done(function (data) {
+                    $('#alertModal').modal('hide');
+                    if (data.code == 0) {
+                        for (var i = 0; i < data.data.length; i++) {
+
+                            var tds = '<td>---------------------' + data.data[i]['lastname'] + '-н ' + data.data[i]['firstname'] +
+                                '<a id="staffBtnSave' + data.data[i]['staffId'] + '" class="btn btn-primary btn-xs" style="display:none" onclick="staffSaveData(' + data.data[i]['staffId'] + ' ,' + branchId + ')" style="padding: 2px;"><i class="glyphicon glyphicon-save"></i></a> ' +
+                                '<a id="staffBtnUpdate' + data.data[i]['staffId'] + '" class="btn btn-primary btn-xs" onclick="staffUpdateData(' + data.data[i]['staffId'] + ')" style="padding: 2px;"><i class="glyphicon glyphicon-edit"></i></a>' +
+                                '<a id="staffBtnDelete' + data.data[i]['staffId'] + '" class="btn btn-primary btn-xs" onclick="staffDeleteData(' + data.data[i]['id'] + ' , ' + branchId + ')" style="margin-left: 10px;padding: 2px;"><i class="glyphicon glyphicon-trash"></i></a>' +
+                                '<a id="staffBtnJobTitle' + data.data[i]['staffId'] + '"  onclick="staffJobTitle(' + data.data[i]['staffId'] + ')" class="btn btn-primary btn-xs" style="margin-left: 10px;font-size: 10px">А/Т</a>' +
+                                '</td>' +
+                                '<td><input id="staffTimefund' + data.data[i]['staffId'] + '" value="' + data.data[i]['timeFund'] + '" style="width: 80px" class="monthlyValue form-control staffData' + data.data[i]['staffId'] + '" disabled="" type="text"></td>' +
+                                '<td><input id="staffRestTime' + data.data[i]['staffId'] + '" value="' + data.data[i]['relaxTime'] + '" style="width: 80px" class="monthlyValue form-control staffData' + data.data[i]['staffId'] + '" disabled="" type="text"></td>' +
+                                '<td><input id="planPercent' + data.data[i]['staffId'] + '" value="' + data.data[i]['valuePercent'] + '" style="width: 80px" class="monthlyValue form-control staffData' + data.data[i]['staffId'] + '" disabled="" type="text"></td>';
+
+                            for (var j = 0; j < colnumber.length; j++) {
+
+                                var proValue = 0;
+                                if (Math.round(data.data[i]['productValues'][colnumber[j]]) > 0 && Math.round(data.data[i]['productValues'][colnumber[j]]) != 'NaN') {
+                                    proValue = Math.round(data.data[i]['productValues'][colnumber[j]]);
+                                }
+
+                                tds += '<td>' +
+                                    '<div style="width: 105px"><div class="staff-inp-dev"><input id="staffData' + data.data[i]['staffId'] + colnumber[j] + '" ' +
+                                    'data-min-val = "' + parseInt(Math.round(data.data[i]['productValues'][colnumber[j]]) - 1) + '" ' +
+                                    'data-max-val="' + parseInt(Math.round(data.data[i]['productValues'][colnumber[j]]) + 1) + '" ' +
+                                    'data-pro-id="' + colnumber['j'] + '" ' +
+                                    'value="' + proValue + '" ' +
+                                    'class="monthlyValue form-control staff-input" disabled="" type="text">' +
+                                    '<a onclick="removeData(' + data.data[i]['staffId'] + ' , ' + colnumber[j] + ')"><i class="glyphicon glyphicon-remove"></i></a></div>' +
+                                    '<div class="staff-arrow">' +
+                                    '<a><i class="glyphicon glyphicon-arrow-up" onclick="addValue(' + data.data[i]['staffId'] + ' , ' + colnumber[j] + ')"></i></a>' +
+                                    '<a><i class="glyphicon glyphicon-arrow-down staff-arrow-i" onclick="minusValue(' + data.data[i]['staffId'] + ' , ' + colnumber[j] + ')"></i></a>' +
+                                    '</div></div></td>';
+                            }
+
+                            $branch.after('<tr class="staffBranch' + branchId + '">' + tds + '</tr>');
+                        }
+                    }
+                    else {
+                        alert('Алдаа гарлаа!');
+                    }
+
+                })
+                .always(function () {
+                });
+        }
+
+        function staffJobTitle(staffId) {
+
+            $('#staffJobTitleModal').modal('show');
+            $('#jobtitlesave').attr('onclick', 'savestaffData(' + staffId + ')');
+        }
+        function savestaffData(staffId) {
+
+            alert('gombo');
+        }
+
+
+        function removeData(staffId, colNumber) {
+            $('#staffData' + staffId + colNumber).val(0);
+        }
+
+        function addValue(staffId, collNumber) {
+
+
+            var num = +$('#staffData' + staffId + collNumber).val() + 1;
+
+            console.log($('#staffData' + staffId + collNumber).data('max-val'));
+            console.log($('#staffData' + staffId + collNumber).data('max-val'));
+
+
+            if ($('#staffData' + staffId + collNumber).data('max-val') < num > $('#staffData' + staffId + collNumber).data('min-val')) {
+                $('#staffData' + staffId + collNumber).val(num);
+            }
+            else {
+                alert('Нэмэх хязгаар тулсан байна!');
+            }
+        }
+
+
+        function minusValue(staffId, collNumber) {
+
+
+            var num = +$('#staffData' + staffId + collNumber).val() - 1;
+
+            if ($('#staffData' + staffId + collNumber).data('min-val') < num < $('#staffData' + staffId + collNumber).data('max-val')) {
+                $('#staffData' + staffId + collNumber).val(num);
+            }
+            else {
+                alert('Хасах хязгаар тулсан байна!');
+            }
+        }
+        // Бүгдийг select хийх
+        $('#checkall').change(function () {
+            if ($(this).is(":checked")) {
+                $('.datas').each(function () {
+                    $(this).prop('checked', true)
+                });
+            } else {
+                $('.datas').each(function () {
+                    $(this).prop('checked', false)
+                });
+            }
+        });
+
+        // Сонгож select хийх, хүүхдүүдийг мөн select хийнэ
+        function checkedBranches($el) {
+            var id = $el.data("id");
+            var listArr = getChildrenId(id);
+            if ($el.is(":checked")) {
+                for (var i = 0; i <= listArr.length; i++) {
+                    $("#check" + listArr[i]).prop('checked', true)
+                }
+            } else {
+                for (var i = 0; i <= listArr.length; i++) {
+                    $("#check" + listArr[i]).prop('checked', false)
+                }
+            }
+        }
+
+
+        var openData = $.cookie("opendataAdd-plan");
+        var res = openData.split(",");
+        for (var i = 0, l = res.length; i < l; i++) {
+            if (res[i] != 'NaN') {
+                $('#data' + res[i]).show();
+                $('#plus' + res[i]).removeClass('glyphicon-plus').addClass('glyphicon-minus');
+                $('#event' + res[i]).data("status", "close");
+                $('.table tr').each(function () {
+                    var parentId = $(this).data('parent');
+                    if (parentId == res[i]) {
+                        $(this).show();
+                    }
+                });
+            }
+        }
+
+        // Бүгдийг нээх
+        function openAll() {
+            $('.childrens').each(function () {
+                var id = ($(this).attr("data-id"));
+                $(this).show();
+                $('#plus' + id).removeClass('glyphicon-plus').addClass('glyphicon-minus');
+                addIdToOpenDataArr(id);
+            });
+
+            $('.parent').each(function () {
+                var id = ($(this).attr("data-id"));
+                $('#plus' + id).removeClass('glyphicon-plus').addClass('glyphicon-minus');
+                addIdToOpenDataArr(id);
+            });
+
+
+        }
+
+        // Бүгдийг хаах
+        function closeAll() {
+            $('.childrens').each(function () {
+                var id = ($(this).attr("data-id"));
+                $(this).hide();
+                $('#plus' + id).removeClass('glyphicon-minus').addClass('glyphicon-plus');
+                removeIdFromOpenDataArr(id);
+            });
+
+            $('.parent').each(function () {
+                var id = ($(this).attr("data-id"));
+                $('#plus' + id).removeClass('glyphicon-minus').addClass('glyphicon-plus');
+                removeIdFromOpenDataArr(id);
+            });
+
+
+        }
+
+        // Нээж хаах
+        function openCloseChild(id, $el) {
+            var listArr = getChildrenId(id);
+            if ($el.data('status') == "close") {
+                childShow(listArr, id)
+            }
+            else {
+                childClose(listArr, id)
+            }
+        }
+
+        // Бүх хүүхдүүд болон тэдгээрийн хүүхдүүдийг авах
+        function getChildrenId(parId) {
+            var childrensArr = [];
+            $('.table tr').each(function () {
+                var parentId = $(this).data('parent');
+                var child_id = $(this).data('id');
+                var ischild = $(this).data('ischild');
+                if (parentId == parId) {
+                    childrensArr.push(child_id);
+                    if (ischild == "Yes") {
+                        var childArr = getChildrenId(child_id);
+                        for (var m = 0; m <= childArr.length; m++) {
+                            childrensArr.push(childArr[m]);
+                        }
+                    }
+                }
+            });
+            return childrensArr;
+        }
+
+
+        // Бүх хүүхдүүд болон тэдгээрийн хүүхдүүдийг харуулах
+        function childShow(ids, id) {
+
+            for (var i = 0; i <= ids.length; i++) {
+                $('#data' + ids[i]).show();
+                $('#plus' + ids[i]).removeClass('glyphicon-plus').addClass('glyphicon-minus');
+                $('#event' + ids[i]).data("status", "open");
+                addIdToOpenDataArr(ids[i]);
+            }
+
+            addIdToOpenDataArr(id);
+            $('#plus' + id).removeClass('glyphicon-plus').addClass('glyphicon-minus');
+            $('#event' + id).data("status", "open");
+        }
+
+        // Бүх хүүхдүүд болон тэдгээрийн хүүхдүүдийг хаах
+        function childClose(ids, id) {
+            for (var i = 0; i <= ids.length; i++) {
+                $('#data' + ids[i]).hide();
+                $('#plus' + ids[i]).removeClass('glyphicon-minus').addClass('glyphicon-plus');
+                $('#event' + ids[i]).data("status", "close");
+                removeIdFromOpenDataArr(ids[i]);
+            }
+            removeIdFromOpenDataArr(id);
+            $('#plus' + id).removeClass('glyphicon-minus').addClass('glyphicon-plus');
+            $('#event' + id).data("status", "close");
+        }
+
+
+        // ******************************** Cookie-д нээгдсэн дата хадгалагдаж байна *************************************
+
+        function getOpenDataArr() {
+            var opendataStr = $.cookie("opendataAdd-plan");
+            if (!opendataStr) opendataStr = "";
+
+            return $.map(opendataStr.split(","), function (n) {
+                return parseInt(n);
+            });
+        }
+
+        function setOpenDataArr(opendataStr) {
+            $.cookie("opendataAdd-plan", opendataStr.join(","))
+        }
+
+        // Cookie-д id нэмж байна
+        function addIdToOpenDataArr(id) {
+            var openData = getOpenDataArr();
+            openData.push(id);
+            setOpenDataArr(openData);
+        }
+
+        // Cookie-с id устгаж байна
+        function removeIdFromOpenDataArr(id) {
+            setOpenDataArr($.grep(getOpenDataArr(), function (r) {
+                return r != id;
+            }));
+        }
+
+
+        function editable() {
+            $('#editable').attr('onclick', 'update()').html('Хадгалах');
+            $('#closable').show();
+            $('.monthlyValue').removeAttr('disabled');
+        }
+
+        function closable() {
+            $('.monthlyValue').attr('disabled', 'disabled');
+            $('#closable').hide();
+            $('#editable').attr('onclick', 'editable()').html('<i class="glyphicon glyphicon-edit"></i> Засах');
+        }
+
+        function update() {
+            var updatePlans = {};
+            $(".monthlyValue").each(function (i) {
+                updatePlans[i] =
+                    {
+                        'planId': $(this).data('monthly-plan'),
+                        'planvalue': $(this).val(),
+                    };
+            });
+
+            $('#alertModal').modal('show');
+            $.ajax({
+                url: '{{ path('branch_data_update') }}',
+                data: {
+                    "data": updatePlans,
+                },
+                type: "POST",
+                dataType: "JSON"
+            })
+                .done(function (data) {
+                    $('#alertModal').modal('hide');
+                    $('.monthlyValue').attr('disabled', 'disabled');
+                    $('#closable').hide();
+                    $('#editable').attr('onclick', 'editable()').html('<i class="glyphicon glyphicon-edit"></i> Засах');
+                })
+                .always(function () {
+                });
+
+
+        }
+
+
+    </script>
+
+{% endblock %}

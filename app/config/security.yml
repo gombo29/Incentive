@@ -1,0 +1,49 @@
+# To get started with security, check out the documentation:
+# http://symfony.com/doc/current/book/security.html
+security:
+    encoders:
+        FOS\UserBundle\Model\UserInterface: { id: md5_nosalt_encoder }
+
+
+    # http://symfony.com/doc/current/book/security.html#where-do-users-come-from-user-providers
+
+    role_hierarchy:
+        ROLE_CMS_USER:       ROLE_USER
+        ROLE_SUPER_ADMIN: [ROLE_CMS_USER, ROLE_ALLOWED_TO_SWITCH]
+
+    providers:
+        fos_userbundle:
+            id: fos_user.user_provider.username_email
+
+    firewalls:
+        main:
+            pattern: ^/
+            form_login:
+                provider: fos_userbundle
+                csrf_provider: security.csrf.token_manager
+                # if you are using Symfony < 2.8, use the following config instead:
+                # csrf_provider: form.csrf_provider
+                default_target_path: /
+
+            logout: true
+            anonymous:    true
+            # activate different ways to authenticate
+
+            # http_basic: ~
+            # http://symfony.com/doc/current/book/security.html#a-configuring-how-your-users-will-authenticate
+
+            # form_login: ~
+            # http://symfony.com/doc/current/cookbook/security/form_login_setup.html
+    access_control:
+        - { path: ^/login$, role: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/test, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/register, role: ROLE_SUPER_ADMIN }
+        - { path: ^/resetting, role: ROLE_SUPER_ADMIN }
+
+        #Cms User
+        - { path: ^/, role: ROLE_CMS_USER }
+
+        - { path: ^/cms-user, role: ROLE_SUPER_ADMIN }
+
+
+

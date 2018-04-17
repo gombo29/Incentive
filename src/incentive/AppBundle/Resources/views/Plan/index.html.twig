@@ -1,0 +1,81 @@
+{% extends '@incentiveApp/base.html.twig' %}
+{% block body %}
+    <div class="row">
+        {% include '@incentiveApp/inc/flashmsg.html.twig' %}
+        <div class="col-xs-12 col-md-6">
+            <h2>{{ title }}</h2>
+        </div>
+        {% if is_granted('ROLE_SUPER_ADMIN') %}
+        <div class="col-xs-12 col-md-6 text-right">
+            <a href="{{ path('plan_new') }}" class="btn btn-primary btn-rounded">Шинээр нэмэх</a>
+        </div>
+        {% endif %}
+        <div class="col-xs-12 col-md-12">
+            <table class="table table-bordered">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Нэр</th>
+                    <th>Нээгдэх</th>
+                    <th>Хаагдах</th>
+                    {% if is_granted('ROLE_SUPER_ADMIN') %}
+                    <th>Салбар, нэгж</th>
+                    <th>Бүтээгдэхүүн</th>
+                    {% endif %}
+                    <th>Үүсгэсэн</th>
+                    <th>Өөрчилсөн</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for entity in data %}
+                    <tr    {% if entity.endDate|date('Y-m-d H:i:s')  <= "now"|date("Y-m-d H:i:s") %} style="background-color: rgba(254,91,86,0.18)" {% endif %}>
+                        <td>{{ entity.id }}</td>
+                        <td>{{ entity.name }}</td>
+                        <td>{{ entity.startDate|date('Y-m-d') }}</td>
+                        <td>{{ entity.endDate|date('Y-m-d') }}</td>
+                        {% if is_granted('ROLE_SUPER_ADMIN') %}
+                        <td><a style="font-size: 16px" href="{{ path('branch_to_plan_home' , {'id': entity.id}) }}"title="Салбар харах"><span class="glyphicon glyphicon-eye-open"></span> {{ entity.cntBranch }} </a></td>
+                        <td><a style="font-size: 16px" href="{{ path('product_to_plan_home', { 'id': entity.id }) }}" title="Бүтээгдэхүүн харах"><span class="glyphicon glyphicon-eye-open"></span> {{ entity.cntProduct }} </a></td>
+                        {% endif %}
+                        <td>{{ entity.createdDate|date('Y-m-d') }}</td>
+                        <td>{{ entity.updatedDate|date('Y-m-d') }}</td>
+                        <td>
+
+
+
+                            {% if is_granted('ROLE_SUPER_ADMIN') %}
+                            <a title="Дэлгэрэнгүй" href="{{ path('monthly_plan_home', {'id' : entity.id}) }}" style="font-size: 16px">
+                                <span class="glyphicon glyphicon-eye-open"></span>
+                            </a>
+                            {% else %}
+                                {% if entity.endDate|date('Y-m-d H:i:s')  >= "now"|date("Y-m-d H:i:s") %}
+                                <a title="Дэлгэрэнгүй" href="{{ path('monthly_plan_home', {'id' : entity.id}) }}" style="font-size: 16px">
+                                    <span class="glyphicon glyphicon-eye-open"></span>
+                                </a>
+                                {% else %}
+                                    <a href="#" style="font-size: 16px">
+                                       Хугацаа дууссан
+                                    </a>
+                                {% endif %}
+                            {% endif %}
+
+
+                            {% if is_granted('ROLE_SUPER_ADMIN') %}
+                            <a title="Засах" href="{{ path('plan_update', {'id': entity.id}) }}" style="font-size: 16px">
+                                <span class="glyphicon glyphicon-pencil"></span>
+                            </a>
+                            <a title="Устгах" href="{{ path('plan_delete', {'id' : entity.id}) }}"
+                               onclick="if(!confirm('Итгэлтэй байна уу?'))return false;" style="font-size: 16px">
+                                <span class="glyphicon glyphicon-trash"></span>
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+{% endblock %}
